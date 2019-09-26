@@ -48,6 +48,32 @@ function initAxios(options){
 }
 
 
+async function bundleTheme(options){
+  const themeName = _.replace(options.activateTheme, /\s/, '\\\\');
+  try {
+    const result = await execa('npx', ['stencil','bundle'], {
+      cwd: options.targetDirectory,
+    });
+    // return result;
+    options.bundledFile = result;
+    return "bundled";
+  } catch (error) {
+    return new Error("Something failed in the push!");
+  }
+}
+
+async function pushAndActivateTheme(options){
+  try {
+    const result = await execa('npx', ['stencil','push','-a', options.activateTheme], {
+      cwd: options.targetDirectory,
+    });
+    // return result;
+    return "pushed and activated";
+  } catch (error) {
+    return new Error("Something failed in the push!");
+  }
+}
+
 async function getStoreInfo(options){
   const themeResp = await bcAxios.get(`${bcBaseUrl}/v2/store`);
   return themeResp.status === 200 && themeResp.data;
@@ -71,7 +97,9 @@ async function cleanupThemes(options) {
   const theme = _.find(themes, {is_active: false, is_private: true})
   if (theme !== undefined){
     await bcAxios.delete(`${bcBaseUrl}/v3/themes/${theme.uuid}`);
-    return chalk.yellow(`Removed ${theme.name}`);
+    setTimeout(() => {
+      return chalk.yellow(`Removed ${theme.name}`);
+    }, 2000);
   }
 }
 
@@ -98,7 +126,7 @@ export async function prepareDeploy(options) {
   };
 
   initAxios(options);
-  
+
   const tasks = new Listr([
     {
       title: 'Cleanup outdated private themes',
@@ -111,21 +139,26 @@ export async function prepareDeploy(options) {
       enabled: () => options.stencilInit,
       skip: () => {
         if(fs.existsSync(`${options.targetDirectory}/.stencil`) && !options.overwriteFiles){
-          return '.stencil exists - pass --overwriteFiles to allow';
+          return 'using existing .stencil file --overwriteFiles to replace';
         }
       },
     },
     // {
-    //   title: 'Install dependencies',
-    //   task: () =>
-    //     projectInstall({
-    //       cwd: options.targetDirectory,
-    //     }),
+    //   title: 'Bundling Theme',
+    //   task: () => bundleTheme(options),
     //   skip: () =>
-    //     !options.runInstall
-    //       ? 'Pass --install to automatically install dependencies'
+    //     !options.activateTheme
+    //       ? 'Pass --activateTheme SomeThemeName to push and activate the theme w/stencil'
     //       : undefined,
     // },
+    {
+      title: 'Push and Activate Theme',
+      task: () => pushAndActivateTheme(options),
+      skip: () =>
+        !options.activateTheme
+          ? 'Pass --activateTheme SomeThemeName to push and activate the theme w/stencil'
+          : undefined,
+    },
   ]);
 
 // export async function createProject(options) {
@@ -174,6 +207,6 @@ export async function prepareDeploy(options) {
 
  await tasks.run();
 
- console.log('%s Project ready', chalk.green.bold('DONE'));
+ console.log('%s Deployed!', chalk.green.bold('DONE'));
  return true;
 }

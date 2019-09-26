@@ -12,15 +12,16 @@ function parseArgumentsIntoOptions(rawArgs) {
      '--storeHash': String,
      '--stencilInit': Boolean,
      '--overwriteFiles': Boolean,
-     '--install': Boolean,
+     '--activateTheme': String,
      '-y': '--yes',
-     '-i': '--install',
+     '-p': '--push',
      '-e': '--environment',
      '-c': '--clientId',
      '-t': '--accessToken',
      '-h': '--storeHash',
      '-s': '--stencilInit',
      '-o': '--overwriteFiles',
+     '-a': '--activateTheme',
    },
    {
      argv: rawArgs.slice(2),
@@ -34,6 +35,7 @@ function parseArgumentsIntoOptions(rawArgs) {
    storeHash: args['--storeHash'] || false,
    stencilInit: args['--stencilInit'] || false,
    overwriteFiles: args['--overwriteFiles'] || false,
+   activateTheme: args['--activateTheme'] || false,
    runInstall: args['--install'] || false,
  };
 }
@@ -41,8 +43,6 @@ async function promptForMissingOptions(options) {
   const defaultEnvironment = 'Staging';
   const defaultClientId = process.env.CLIENT_ID;
   const defaultAccessToken =  process.env.ACCESS_TOKEN;
-  const defaultStoreUrl = process.env.STORE_URL;
-
   const defaultStoreHash = process.env.STORE_HASH;
 
   if (options.skipPrompts) {
@@ -51,7 +51,6 @@ async function promptForMissingOptions(options) {
       environment: options.environment || defaultEnvironment,
       clientId: options.clientId || defaultClientId,
       accessToken: options.accessToken || defaultAccessToken,
-      storeUrl: options.storeUrl || defaultStoreUrl,
       storeHash: options.storeHash || defaultStoreHash,
     };
   }
