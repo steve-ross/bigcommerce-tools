@@ -51,7 +51,7 @@ function initAxios(options){
 async function bundleTheme(options){
   const themeName = _.replace(options.activateTheme, /\s/, '\\\\');
   try {
-    const result = await execa('npx', ['stencil','bundle'], {
+    const result = await execa('npx', ['-p', '@bigcommerce/stencil-cli','stencil','bundle'], {
       cwd: options.targetDirectory,
     });
     // return result;
@@ -159,7 +159,7 @@ export async function prepareDeploy(options) {
           ? 'Pass --activateTheme SomeThemeName to push and activate the theme w/stencil'
           : undefined,
     },
-  ]);
+  ], {renderer: options.inlineOutput ? 'verbose' : 'default'});
 
 // export async function createProject(options) {
 //  options = {
