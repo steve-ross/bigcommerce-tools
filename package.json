@@ -19,6 +19,7 @@
     "Tools",
     "CI/CD"
   ],
+  "files": ["bin/,src/"],
   "author": "Steve Ross",
   "license": "MIT",
   "bugs": {
