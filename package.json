@@ -1,11 +1,11 @@
 {
   "name": "@steve-ross/bigcommerce-tools",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Tools for helping with CI/CD on the BigCommerce Platform",
   "main": "src/index.js",
   "bin": {
-    "@steve-ross/stencil-preflight": "bin/stencil-preflight",
-    "stencil-preflight": "bin/stencil-preflight"
+    "@steve-ross/stencil-preflight": "./src/stencil-preflight.js",
+    "stencil-preflight": "./src/stencil-preflight.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -19,7 +19,9 @@
     "Tools",
     "CI/CD"
   ],
-  "files": ["bin/,src/"],
+  "files": [
+    "bin/,src/"
+  ],
   "author": "Steve Ross",
   "license": "MIT",
   "bugs": {
