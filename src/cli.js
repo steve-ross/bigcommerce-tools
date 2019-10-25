@@ -12,6 +12,7 @@ function parseArgumentsIntoOptions(rawArgs) {
      '--storeHash': String,
      '--stencilInit': Boolean,
      '--overwriteFiles': Boolean,
+     '--inlineOutput': Boolean,
      '--activateTheme': String,
      '-y': '--yes',
      '-p': '--push',
@@ -22,6 +23,7 @@ function parseArgumentsIntoOptions(rawArgs) {
      '-s': '--stencilInit',
      '-o': '--overwriteFiles',
      '-a': '--activateTheme',
+     '-i': '--inlineOutput'
    },
    {
      argv: rawArgs.slice(2),
@@ -37,6 +39,7 @@ function parseArgumentsIntoOptions(rawArgs) {
    overwriteFiles: args['--overwriteFiles'] || false,
    activateTheme: args['--activateTheme'] || false,
    runInstall: args['--install'] || false,
+   inlineOutput: args['--inlineOutput'] || false,
  };
 }
 async function promptForMissingOptions(options) {
