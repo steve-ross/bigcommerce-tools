@@ -1,6 +1,6 @@
 {
   "name": "@steve-ross/bigcommerce-tools",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Tools for helping with CI/CD on the BigCommerce Platform",
   "main": "src/index.js",
   "bin": {
@@ -29,7 +29,6 @@
   },
   "homepage": "https://github.com/steve-ross/bigcommerce-tools#readme",
   "dependencies": {
-    "@bigcommerce/stencil-cli": "^1.21.1",
     "arg": "^4.1.1",
     "axios": "^0.19.0",
     "chalk": "^2.4.2",
