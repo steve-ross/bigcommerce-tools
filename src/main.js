@@ -64,7 +64,7 @@ async function bundleTheme(options){
 
 async function pushAndActivateTheme(options){
   try {
-    const result = await execa('npx', ['stencil','push','-a', options.activateTheme], {
+    const result = await execa('npx', ['-p', '@bigcommerce/stencil-cli', 'stencil','push','-a', options.activateTheme], {
       cwd: options.targetDirectory,
     });
     // return result;
