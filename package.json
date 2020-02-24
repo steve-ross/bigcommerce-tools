@@ -1,6 +1,6 @@
 {
   "name": "@steve-ross/bigcommerce-tools",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Tools for helping with CI/CD on the BigCommerce Platform",
   "main": "src/index.js",
   "engines": {
