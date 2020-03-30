@@ -1,38 +1,12 @@
 import chalk from 'chalk';
 import fs from 'fs';
-import ncp from 'ncp';
-import path from 'path';
-import { promisify } from 'util';
 import execa from 'execa';
 import Listr from 'listr';
-import { projectInstall } from 'pkg-install';
 const axios = require('axios');
 const _ = require('lodash');
-const util = require('util');
-const log = console.log;
 
 let bcAxios;
 let bcBaseUrl;
-
-
-// const access = promisify(fs.access);
-// const copy = promisify(ncp);
-
-// async function copyTemplateFiles(options) {
-//  return copy(options.templateDirectory, options.targetDirectory, {
-//    clobber: false,
-//  });
-// }
-
-// async function initGit(options) {
-//   const result = await execa('git', ['init'], {
-//     cwd: options.targetDirectory,
-//   });
-//   if (result.failed) {
-//     return Promise.reject(new Error('Failed to initialize git'));
-//   }
-//   return;
-//  }
 
 function initAxios(options){
   if (!bcAxios){
@@ -47,30 +21,15 @@ function initAxios(options){
   if (!bcBaseUrl) bcBaseUrl = `https://api.bigcommerce.com/stores/${options.storeHash}`;
 }
 
-
-async function bundleTheme(options){
-  const themeName = _.replace(options.activateTheme, /\s/, '\\\\');
-  try {
-    const result = await execa('npx', ['-p', '@bigcommerce/stencil-cli','stencil','bundle'], {
-      cwd: options.targetDirectory,
-    });
-    // return result;
-    options.bundledFile = result;
-    return "bundled";
-  } catch (error) {
-    return new Error("Something failed in the push!");
-  }
-}
-
 async function pushAndActivateTheme(options){
   try {
     const result = await execa('npx', ['-p', '@bigcommerce/stencil-cli', 'stencil','push','-a', options.activateTheme], {
       cwd: options.targetDirectory,
     });
-    // return result;
     return "pushed and activated";
   } catch (error) {
-    return new Error("Something failed in the push!");
+    console.error(error.all)
+    throw new Error(error);
   }
 }
 
@@ -126,7 +85,6 @@ export async function prepareDeploy(options) {
   };
 
   initAxios(options);
-
   const tasks = new Listr([
     {
       title: 'Cleanup outdated private themes',
@@ -143,14 +101,6 @@ export async function prepareDeploy(options) {
         }
       },
     },
-    // {
-    //   title: 'Bundling Theme',
-    //   task: () => bundleTheme(options),
-    //   skip: () =>
-    //     !options.activateTheme
-    //       ? 'Pass --activateTheme SomeThemeName to push and activate the theme w/stencil'
-    //       : undefined,
-    // },
     {
       title: 'Push and Activate Theme',
       task: () => pushAndActivateTheme(options),
@@ -160,50 +110,6 @@ export async function prepareDeploy(options) {
           : undefined,
     },
   ], {renderer: options.inlineOutput ? 'verbose' : 'default'});
-
-// export async function createProject(options) {
-//  options = {
-//    ...options,
-//    targetDirectory: options.targetDirectory || process.cwd(),
-//  };
-
-//  const currentFileUrl = import.meta.url;
-//  const templateDir = path.resolve(
-//    new URL(currentFileUrl).pathname,
-//    '../../templates',
-//    options.template.toLowerCase()
-//  );
-//  options.templateDirectory = templateDir;
-
-//  try {
-//    await access(templateDir, fs.constants.R_OK);
-//  } catch (err) {
-//    console.error('%s Invalid template name', chalk.red.bold('ERROR'));
-//    process.exit(1);
-//  }
-
-//  const tasks = new Listr([
-//   {
-//     title: 'Remove oldest theme',
-//     task: () => removeOldestTheme(options),
-//   },
-//   {
-//     title: 'Create stencil config',
-//     task: () => initStencil(options),
-//     enabled: () => options.stencil,
-//   },
-//   {
-//     title: 'Install dependencies',
-//     task: () =>
-//       projectInstall({
-//         cwd: options.targetDirectory,
-//       }),
-//     skip: () =>
-//       !options.runInstall
-//         ? 'Pass --install to automatically install dependencies'
-//         : undefined,
-//   },
-// ]);
 
  await tasks.run();
 
