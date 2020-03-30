@@ -28,7 +28,8 @@ async function pushAndActivateTheme(options){
     });
     return "pushed and activated";
   } catch (error) {
-    return new Error("Something failed in the push!");
+    console.error(error.all)
+    throw new Error(error);
   }
 }
 
