@@ -27,7 +27,7 @@ function initAxios(options){
 
 async function pushAndActivateTheme(options){
   try {
-    await execa('npx', ['-p', '@bigcommerce/stencil-cli', 'stencil','push','-a', options.activateTheme], {
+    await execa('npx', ['-p', '@bigcommerce/stencil-cli', 'stencil','push','-a', `"${options.activateTheme}"`], {
       cwd: options.targetDirectory,
     });
     
