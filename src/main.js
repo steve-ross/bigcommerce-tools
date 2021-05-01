@@ -37,7 +37,7 @@ async function pushAndActivateTheme(options){
   }
 }
 
-async function getStoreInfo(options){
+async function getStoreInfo(){
   try {
     const themeResp = await bcAxios.get(`${bcBaseUrl}/v2/store`);
     return themeResp.status === 200 && themeResp.data;
@@ -46,7 +46,7 @@ async function getStoreInfo(options){
   }
 }
 
-async function getThemes(options){
+async function getThemes(){
   try {
     const themeResp = await bcAxios.get(`${bcBaseUrl}/v3/themes`);
     return themeResp.status === 200 && themeResp.data.data;
@@ -56,8 +56,8 @@ async function getThemes(options){
 }
 
 
-async function skipThemeCleanup(options) {
-    const themes = await getThemes(options);
+async function skipThemeCleanup() {
+    const themes = await getThemes();
     if(!_.find(themes, {is_active: false, is_private: true})){
       return 'Nothing to clean up.';
     }
@@ -65,16 +65,14 @@ async function skipThemeCleanup(options) {
 
 async function cleanupThemes(options) {
   try {
-    if (theme !== undefined){
       const themes = await getThemes(options);
-      const theme = _.find(themes, {is_active: false, is_private: true})
-      await bcAxios.delete(`${bcBaseUrl}/v3/themes/${theme.uuid}`);
+      const theme = _.find(themes, {is_active: false, is_private: true});
       if(theme){
-        setTimeout(() => {
-          return chalk.yellow(`Removed Theme: ${theme && theme.name}`);
-        }, 2000);
+        await bcAxios.delete(`${bcBaseUrl}/v3/themes/${theme.uuid}`);
+        return `Removed Theme: ${theme && theme.name}`;
+      } else {
+        return `no themes to cleanup`;
       }
-    }
   } catch (error) {
     throw new Error(`Cleanup Themes Failed with: ${error.message}`);
   }
