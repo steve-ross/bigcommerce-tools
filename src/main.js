@@ -69,9 +69,11 @@ async function cleanupThemes(options) {
       const themes = await getThemes(options);
       const theme = _.find(themes, {is_active: false, is_private: true})
       await bcAxios.delete(`${bcBaseUrl}/v3/themes/${theme.uuid}`);
-      setTimeout(() => {
-        return chalk.yellow(`Removed ${theme.name}`);
-      }, 2000);
+      if(theme){
+        setTimeout(() => {
+          return chalk.yellow(`Removed Theme: ${theme && theme.name}`);
+        }, 2000);
+      }
     }
   } catch (error) {
     throw new Error(`Cleanup Themes Failed with: ${error.message}`);
