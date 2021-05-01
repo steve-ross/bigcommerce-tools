@@ -1,12 +1,14 @@
 import arg from 'arg';
 import inquirer from 'inquirer';
 import { prepareDeploy } from './main';
+const core = require('@actions/core');
 
 function parseArgumentsIntoOptions(rawArgs) {
  const args = arg(
    {
      '--yes': Boolean,
      '--environment': String,
+     '--github': Boolean,
      '--clientId': String,
      '--accessToken': String,
      '--storeHash': String,
@@ -17,6 +19,7 @@ function parseArgumentsIntoOptions(rawArgs) {
      '-y': '--yes',
      '-p': '--push',
      '-e': '--environment',
+     '-g': '--github',
      '-c': '--clientId',
      '-t': '--accessToken',
      '-h': '--storeHash',
@@ -32,6 +35,7 @@ function parseArgumentsIntoOptions(rawArgs) {
  return {
    skipPrompts: args['--yes'] || false,
    environment: args['--environment'] || false,
+   asGitHubAction: args['--github'] || false,
    clientId: args['--clientId'] || false,
    accessToken: args['--accessToken'] || false,
    storeHash: args['--storeHash'] || false,
@@ -121,5 +125,13 @@ async function promptForMissingOptions(options) {
 export async function cli(args) {
   let options = parseArgumentsIntoOptions(args);
   options = await promptForMissingOptions(options);
-  await prepareDeploy(options);
+  try {
+    await prepareDeploy(options);
+  } catch (error) {
+    if (options.asGitHubAction) {
+      core.setFailed(error.message);
+    } else {
+      console.error(error);
+    }
+  }
  }
