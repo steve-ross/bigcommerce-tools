@@ -5,6 +5,10 @@ import Listr from 'listr';
 const axios = require('axios');
 const _ = require('lodash');
 
+
+const STENCIL_CONFIG_FILE = 'config.stencil.json';
+const STENCIL_SECRETS_FILE = 'secrets.stencil.json';
+
 let bcAxios;
 let bcBaseUrl;
 
@@ -23,59 +27,74 @@ function initAxios(options){
 
 async function pushAndActivateTheme(options){
   try {
-    const result = await execa('npx', ['-p', '@bigcommerce/stencil-cli', 'stencil','push','-a', options.activateTheme], {
+    await execa('npx', ['-p', '@bigcommerce/stencil-cli', 'stencil','push','-a', options.activateTheme], {
       cwd: options.targetDirectory,
     });
-    return "pushed and activated";
+    
   } catch (error) {
-    console.error(error.all)
-    throw new Error(error);
+    throw new Error(`Push and Activate Theme failed with ${error.message}`);
+    
   }
 }
 
 async function getStoreInfo(options){
-  const themeResp = await bcAxios.get(`${bcBaseUrl}/v2/store`);
-  return themeResp.status === 200 && themeResp.data;
+  try {
+    const themeResp = await bcAxios.get(`${bcBaseUrl}/v2/store`);
+    return themeResp.status === 200 && themeResp.data;
+  } catch (error) {
+    throw new Error(`Fetching store info from BigCommerce failed with:  ${error.message}`);
+  }
 }
 
 async function getThemes(options){
-  const themeResp = await bcAxios.get(`${bcBaseUrl}/v3/themes`);
-  return themeResp.status === 200 && themeResp.data.data;
+  try {
+    const themeResp = await bcAxios.get(`${bcBaseUrl}/v3/themes`);
+    return themeResp.status === 200 && themeResp.data.data;
+  } catch (error) {
+    throw new Error(`Fetching themes from BigCommerce failed with: ${error.message}`);
+  }
 }
 
 
 async function skipThemeCleanup(options) {
-  const themes = await getThemes(options);
-  if(!_.find(themes, {is_active: false, is_private: true})){
-    return "Nothing to clean up.";
-  }
+    const themes = await getThemes(options);
+    if(!_.find(themes, {is_active: false, is_private: true})){
+      return 'Nothing to clean up.';
+    }
 }
 
 async function cleanupThemes(options) {
-  const themes = await getThemes(options);
-  const theme = _.find(themes, {is_active: false, is_private: true})
-  if (theme !== undefined){
-    await bcAxios.delete(`${bcBaseUrl}/v3/themes/${theme.uuid}`);
-    setTimeout(() => {
-      return chalk.yellow(`Removed ${theme.name}`);
-    }, 2000);
+  try {
+    if (theme !== undefined){
+      const themes = await getThemes(options);
+      const theme = _.find(themes, {is_active: false, is_private: true})
+      await bcAxios.delete(`${bcBaseUrl}/v3/themes/${theme.uuid}`);
+      setTimeout(() => {
+        return chalk.yellow(`Removed ${theme.name}`);
+      }, 2000);
+    }
+  } catch (error) {
+    throw new Error(`Cleanup Themes Failed with: ${error.message}`);
   }
 }
 
 async function initStencil(options) {
   const storeInfo = await getStoreInfo(options);
-  const stencilFileData = {
-    normalStoreUrl: storeInfo.domain,
-    accessToken: options.accessToken,
-    port: 3000,
-    customLayouts: {
-      brand: {},
-      category: {},
-      page: {},
-      product: {}
-    }
+  const stencilConfig = {
+    'customLayouts': {
+      'brand': {},
+      'category': {},
+      'page': {},
+      'product': {},
+    },
+    'normalStoreUrl': 'https://' + storeInfo.domain,
+    'port': 3000,
   }
-  await fs.writeFileSync(`${options.targetDirectory}/.stencil`, JSON.stringify(stencilFileData));
+  const stencilSecrets = {
+    accessToken: options.accessToken,
+  }
+  await fs.writeFileSync(`${options.targetDirectory}/${STENCIL_CONFIG_FILE}`, JSON.stringify(stencilConfig));
+  await fs.writeFileSync(`${options.targetDirectory}/${STENCIL_SECRETS_FILE}`, JSON.stringify(stencilSecrets));
 }
 
 export async function prepareDeploy(options) {
@@ -92,12 +111,12 @@ export async function prepareDeploy(options) {
       skip: () => skipThemeCleanup(options),
     },
     {
-      title: 'Stencil config file (.stencil)',
+      title: `Stencil config files`,
       task: () => initStencil(options),
       enabled: () => options.stencilInit,
       skip: () => {
-        if(fs.existsSync(`${options.targetDirectory}/.stencil`) && !options.overwriteFiles){
-          return 'using existing .stencil file --overwriteFiles to replace';
+        if(fs.existsSync(`${options.targetDirectory}/${STENCIL_CONFIG_FILE}`) || fs.existsSync(`${options.targetDirectory}/${STENCIL_SECRETS_FILE}`) && !options.overwriteFiles){
+          return 'using existing config file --overwriteFiles to replace';
         }
       },
     },
@@ -111,8 +130,6 @@ export async function prepareDeploy(options) {
     },
   ], {renderer: options.inlineOutput ? 'verbose' : 'default'});
 
- await tasks.run();
+  return await tasks.run();
 
- console.log('%s Deployed!', chalk.green.bold('DONE'));
- return true;
 }
